@@ -3,6 +3,10 @@ import os
 
 app = Flask(__name__)
 
+# DB config
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 # --- Routes ---
 @app.route("/")
 def index():
@@ -11,6 +15,10 @@ def index():
 @app.route("/dashboard")
 def dashboard():
     return render_template("dashboard.html")
+
+# --- Register API blueprint ---
+from api import api_bp
+app.register_blueprint(api_bp)
 
 # --- Run App ---
 if __name__ == "__main__":
