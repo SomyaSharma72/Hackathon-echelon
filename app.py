@@ -3,7 +3,7 @@ import os
 
 app = Flask(__name__)
 
-# DB config
+# --- DB config ----
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
