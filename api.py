@@ -41,7 +41,8 @@ def setup(state):
 
 # Telegram config
 def tg_api_url():
-    token = os.getenv("8258136592:AAHY789IaAd07OBiVQl56EMtkAqhnwMDNvU")
+    token = os.getenv("TELEGRAM_TOKEN")
+    print("Telegram token loaded:", bool(os.getenv("TELEGRAM_TOKEN")))
     return f"https://api.telegram.org/bot{token}" if token else None
 
 # API routes
@@ -91,30 +92,28 @@ def post_message():
     return jsonify(msg.to_dict()), 201
 
 # Telegram webhook (inbound)
-@api_bp.route("/webhook/telegram", methods=["POST"])
+@api_bp.route('/webhook/telegram', methods=['POST'])
 def telegram_webhook():
-    payload = request.get_json() or {}
-    message = payload.get("message") or {}
+    data = request.get_json()
+    if not data:
+        return jsonify({"ok": False}), 400
 
-    chat = message.get("chat") or {}
-    from_user = message.get("from") or {}
-    text = message.get("text") or ""
+    message = data.get("message")
+    if message and "text" in message:
+        text = message["text"]
+        sender_id = message["from"]["id"]
+        sender_name = message["from"].get("username") or message["from"].get("first_name", "Unknown")
+        chat_id = message["chat"]["id"]
 
-    if not text:
-        return jsonify({"ok": True})  # ignore non-text updates for now
-
-    chat_id = chat.get("id")
-    sender = from_user.get("username") or str(from_user.get("id") or "unknown")
-
-    # Save inbound
-    m = Message(
-        platform="telegram",
-        sender=sender,
-        recipient=str(chat_id) if chat_id is not None else None,
-        content=text,
-        direction="in",
-    )
-    db.session.add(m)
-    db.session.commit()
+        # Save to DB
+        msg = Message(
+            platform="telegram",
+            sender=sender_name,
+            recipient=str(chat_id),
+            content=text,
+            direction="in"
+        )
+        db.session.add(msg)
+        db.session.commit()
 
     return jsonify({"ok": True})
